@@ -1,4 +1,4 @@
-# Snake Game 
+# Snake Game  🐍 🐍
 
 This is a simple Snake game implemented in C++ for the console. It features:
 - A snake that moves on a grid.
@@ -150,7 +150,3 @@ Play again? (y/n): n
 ## License
 
 This project is open-source. Feel free to modify and distribute it as you like!
-
----
-
-This section now explains the main data structures used in the code, helping users understand how the program works at a deeper level. Let me know if you need any more details or modifications!
