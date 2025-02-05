@@ -1,8 +1,4 @@
-Sure! Here's an updated version of the README with a section dedicated to the data structures used in the code:
-
----
-
-# Snake Game - C++ Console Application
+# Snake Game 
 
 This is a simple Snake game implemented in C++ for the console. It features:
 - A snake that moves on a grid.
