@@ -2,17 +2,16 @@
 #include <cstdlib>
 #include <ctime>
 #include <vector>
-#include <conio.h>   // for _kbhit() and _getch()
-#include <windows.h> // for Sleep()
+#include <conio.h>   
+#include <windows.h> 
 
 using namespace std;
 
-const int GRID_SIZE = 20; // NxN grid size
+const int GRID_SIZE = 20; 
 const char SNAKE_BODY = '0';
 const char FOOD = '$';
 const char EMPTY = ' ';
 
-// Direction enum for snake movement
 enum Direction { STOP = 0, UP, DOWN, LEFT, RIGHT };
 
 class Food {
@@ -21,7 +20,7 @@ public:
 
     Food(int gridSize) {
         vector< pair<int, int> > v;
-        respawn(gridSize, v); // Initialize with an empty snake body
+        respawn(gridSize, v); 
     }
 
     void respawn(int gridSize, const vector< pair<int, int> > &snakeBody) {
@@ -60,7 +59,7 @@ public:
         default: break;
         }
 
-        // Move the snake's body
+      
         body.insert(body.begin(), head);
         body.pop_back();
     }
@@ -70,12 +69,12 @@ public:
     }
 
     bool hasCollided() {
-        // Check collision with self
+        
         for (size_t i = 1; i < body.size(); ++i) {
             if (body[i] == body[0]) return true;
         }
 
-        // Check collision with boundaries
+        
         return body[0].first < 0 || body[0].second < 0 ||
                body[0].first >= GRID_SIZE || body[0].second >= GRID_SIZE;
     }
@@ -87,21 +86,20 @@ private:
     Food food;
     int score;
     bool gameOver;
-    static int maxScore; // Static variable for max score
+    static int maxScore; 
 
 public:
     Game() : food(GRID_SIZE), score(0), gameOver(false) {
-        food.respawn(GRID_SIZE, snake.body); // Ensure food is placed at game start
+        food.respawn(GRID_SIZE, snake.body); 
     }
 
     void draw() {
         system("cls");
 
-        // Draw the grid
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 if (i == 0 || i == GRID_SIZE - 1 || j == 0 || j == GRID_SIZE - 1) {
-                    cout << "#"; // Boundary
+                    cout << "#"; 
                 } else {
                     bool isSnake = false;
                     for (const auto &segment : snake.body) {
@@ -121,7 +119,7 @@ public:
             cout << endl;
         }
         cout << "\nScore: " << score << endl;
-        cout << "Max Score: " << maxScore << endl; // Display max score
+        cout << "Max Score: " << maxScore << endl; 
     }
     
     void input() {
@@ -132,38 +130,35 @@ public:
             case 's': if (snake.dir != UP) snake.dir = DOWN; break;
             case 'a': if (snake.dir != RIGHT) snake.dir = LEFT; break;
             case 'd': if (snake.dir != LEFT) snake.dir = RIGHT; break;
-            case 'x': gameOver = true; break; // Exit the game
+            case 'x': gameOver = true; break; 
             }
         }
     }
 
     void logic() {
-        // Check if snake eats the food
+        
         if (snake.body[0].first == food.x && snake.body[0].second == food.y) {
             score++;  // Increment score by 1 for each food eaten
             snake.grow();
             food.respawn(GRID_SIZE, snake.body);
         }
         snake.move();
-        // Check for collisions
         if (snake.hasCollided()) {
             gameOver = true;
         }
     }
 
     void run() {
-        // Wait for the player to press a key to start the game
         cout << "Press any key to start the game...";
-        _getch(); // Wait for keypress
+        _getch(); 
 
         while (!gameOver) {
             draw();
             input();
             logic();
-            Sleep(100); // Adjust speed to make the snake faster
+            Sleep(100);
         }
 
-        // Update max score if the current score is higher
         if (score > maxScore) {
             maxScore = score;
         }
@@ -171,19 +166,16 @@ public:
         cout << "Game Over! Final Score: " << score << endl;
     }
 
-    // Static function to get the max score
     static int getMaxScore() {
         return maxScore;
     }
 };
-
-// Initialize the static variable maxScore
 int Game::maxScore = 0;
 
 int main() {
     char choice;
     do {
-        srand(time(0)); // Initialize random seed only once
+        srand(time(0)); 
         Game game;
         game.run();
         cout << "Play again? (y/n): ";
