@@ -1,10 +1,10 @@
 # Snake Game🐍🐍🐍
 
 ## Created BY
--Rutva Mehta
--Khush Hingrajiya
--Manthan Kanetiya
--Vikas Bhabhor
+- **Rutva Mehta**
+- **Khush Hingrajiya**
+- **Manthan Kanetiya**
+- **Vikas Bhabhor**
 
 ## Overview
 This is a classic Snake Game implemented in C++ using the Windows Console. The game allows the player to control a snake that moves around the screen, eating food to grow longer while avoiding collisions with the walls and itself. The game includes multiple difficulty levels and maintains high scores for each difficulty setting.
