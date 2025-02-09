@@ -1,185 +1,270 @@
 #include <iostream>
+#include <conio.h>
+#include <windows.h>
 #include <cstdlib>
 #include <ctime>
-#include <vector>
-#include <conio.h>   
-#include <windows.h> 
-
+#include <string>
 using namespace std;
-
-const int GRID_SIZE = 20; 
-const char SNAKE_BODY = '0';
-const char FOOD = '$';
-const char EMPTY = ' ';
-
+int WIDTH = 40;
+int HEIGHT = 20;
 enum Direction { STOP = 0, UP, DOWN, LEFT, RIGHT };
-
-class Food {
-public:
-    int x, y;
-
-    Food(int gridSize) {
-        vector< pair<int, int> > v;
-        respawn(gridSize, v); 
-    }
-
-    void respawn(int gridSize, const vector< pair<int, int> > &snakeBody) {
-        bool validPosition = false;
-        while (!validPosition) {
-            x = rand() % (gridSize - 2) + 1;
-            y = rand() % (gridSize - 2) + 1;
-            validPosition = true;
-            for (const auto &segment : snakeBody) {
-                if (segment.first == x && segment.second == y) {
-                    validPosition = false;
-                    break;
-                }
-            }
-        }
-    }
-};
-
-class Snake {
-public:
-    vector< pair<int, int> > body;
-    Direction dir;
-
-    Snake() {
-        dir = STOP;
-        body.push_back(make_pair(GRID_SIZE / 2, GRID_SIZE / 2));
-    }
-
-    void move() {
-        pair<int, int> head = body[0];
-        switch (dir) {
-        case UP:    head.second--; break;
-        case DOWN:  head.second++; break;
-        case LEFT:  head.first--; break;
-        case RIGHT: head.first++; break;
-        default: break;
-        }
-
-      
-        body.insert(body.begin(), head);
-        body.pop_back();
-    }
-
-    void grow() {
-        body.push_back(body.back());
-    }
-
-    bool hasCollided() {
-        
-        for (size_t i = 1; i < body.size(); ++i) {
-            if (body[i] == body[0]) return true;
-        }
-
-        
-        return body[0].first < 0 || body[0].second < 0 ||
-               body[0].first >= GRID_SIZE || body[0].second >= GRID_SIZE;
-    }
-};
-
-class Game {
+enum Difficulty { EASY, MEDIUM, HARD };
+int highScoreEasy = 0;
+int highScoreMedium = 0;
+int highScoreHard = 0;
+void setColor(WORD color) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hConsole, color);
+}
+class SnakeGame {
 private:
-    Snake snake;
-    Food food;
-    int score;
     bool gameOver;
-    static int maxScore; 
-
-public:
-    Game() : food(GRID_SIZE), score(0), gameOver(false) {
-        food.respawn(GRID_SIZE, snake.body); 
+    int score;
+    int x, y;              
+    int foodX, foodY;      
+    int tailX[100], tailY[100];  
+    int tailLength;        
+    Direction dir;        
+    Difficulty diff;     
+    HANDLE console;
+    void setCursorPosition(int posX, int posY) {
+        COORD coord;
+        coord.X = posX;
+        coord.Y = posY;
+        SetConsoleCursorPosition(console, coord);
     }
-
+    bool isFoodOnSnake(int fx, int fy) {
+        if (fx == x && fy == y)
+            return true;
+        for (int i = 0; i < tailLength; i++) {
+            if (tailX[i] == fx && tailY[i] == fy)
+                return true;
+        }
+        return false;
+    }
+    void spawnFood() {
+        do {
+            foodX = rand() % WIDTH;
+            foodY = rand() % HEIGHT;
+        } while (isFoodOnSnake(foodX, foodY));
+    }
+    void updateHighScore() {
+        if (diff == EASY && score > highScoreEasy)
+            highScoreEasy = score;
+        else if (diff == MEDIUM && score > highScoreMedium)
+            highScoreMedium = score;
+        else if (diff == HARD && score > highScoreHard)
+            highScoreHard = score;
+    }
+    
+public:
+    SnakeGame(Difficulty d) : diff(d) {
+        console = GetStdHandle(STD_OUTPUT_HANDLE);
+        resetGame();
+    }
+    void resetGame() {
+        gameOver = false;
+        score = 0;
+        dir = STOP; 
+        x = WIDTH / 2;
+        y = HEIGHT / 2;
+        tailLength = 0;
+        spawnFood();
+    }
     void draw() {
-        system("cls");
-
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                if (i == 0 || i == GRID_SIZE - 1 || j == 0 || j == GRID_SIZE - 1) {
-                    cout << "#"; 
-                } else {
-                    bool isSnake = false;
-                    for (const auto &segment : snake.body) {
-                        if (segment.first == j && segment.second == i) {
-                            cout << SNAKE_BODY;
-                            isSnake = true;
+        string output;
+        for (int i = 0; i < WIDTH + 2; i++)
+            output += "#";
+        output += "\n";
+        
+        for (int i = 0; i < HEIGHT; i++) {
+            for (int j = 0; j < WIDTH; j++) {
+                if (j == 0)
+                    output += "#"; 
+                if (i == y && j == x) {
+                    output += (gameOver ? "x" : "O");
+                }
+                else if (i == foodY && j == foodX) {
+                    output += "$";
+                }
+                else {
+                    bool printed = false;
+                    for (int k = 0; k < tailLength; k++) {
+                        if (tailX[k] == j && tailY[k] == i) {
+                            output += (gameOver ? "x" : "o");
+                            printed = true;
                             break;
                         }
                     }
-                    if (food.x == j && food.y == i) {
-                        cout << FOOD;
-                    } else if (!isSnake) {
-                        cout << EMPTY;
-                    }
+                    if (!printed)
+                        output += " ";
                 }
+                
+                if (j == WIDTH - 1)
+                    output += "#"; 
             }
-            cout << endl;
+            output += "\n";
         }
-        cout << "\nScore: " << score << endl;
-        cout << "Max Score: " << maxScore << endl; 
+        for (int i = 0; i < WIDTH + 2; i++)
+            output += "#";
+        output += "\n";
+        output += "  Score: " + to_string(score) + "    |    High Score: ";
+        if (diff == EASY)
+            output += to_string(highScoreEasy);
+        else if (diff == MEDIUM)
+            output += to_string(highScoreMedium);
+        else
+            output += to_string(highScoreHard);
+        output += "\n";
+
+        setCursorPosition(0, 0);
+        cout << output;
     }
-    
     void input() {
         if (_kbhit()) {
-            char key = _getch();
-            switch (key) {
-            case 'w': if (snake.dir != DOWN) snake.dir = UP; break;
-            case 's': if (snake.dir != UP) snake.dir = DOWN; break;
-            case 'a': if (snake.dir != RIGHT) snake.dir = LEFT; break;
-            case 'd': if (snake.dir != LEFT) snake.dir = RIGHT; break;
-            case 'x': gameOver = true; break; 
+            char ch = _getch();
+            switch (ch) {
+                case 'w': if (dir != DOWN)  dir = UP;    break;
+                case 's': if (dir != UP)    dir = DOWN;  break;
+                case 'a': if (dir != RIGHT) dir = LEFT;  break;
+                case 'd': if (dir != LEFT)  dir = RIGHT; break;
+                case 'x': gameOver = true;             break;
             }
         }
     }
-
     void logic() {
-        
-        if (snake.body[0].first == food.x && snake.body[0].second == food.y) {
-            score++;  // Increment score by 1 for each food eaten
-            snake.grow();
-            food.respawn(GRID_SIZE, snake.body);
+        int prevX = tailX[0], prevY = tailY[0], prev2X, prev2Y;
+        tailX[0] = x;
+        tailY[0] = y;
+        for (int i = 1; i < tailLength; i++) {
+            prev2X = tailX[i];
+            prev2Y = tailY[i];
+            tailX[i] = prevX;
+            tailY[i] = prevY;
+            prevX = prev2X;
+            prevY = prev2Y;
         }
-        snake.move();
-        if (snake.hasCollided()) {
+        switch (dir) {
+            case UP:    y--; break;
+            case DOWN:  y++; break;
+            case LEFT:  x--; break;
+            case RIGHT: x++; break;
+            default: break;
+        }
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) {
             gameOver = true;
+            return;
         }
+        for (int i = 0; i < tailLength; i++) {
+            if (tailX[i] == x && tailY[i] == y) {
+                gameOver = true;
+                return;
+            }
+        }
+        
+        if (x == foodX && y == foodY) {
+            score += 10;
+            tailLength++;
+            spawnFood();
+        }
+        
+        updateHighScore();
     }
 
-    void run() {
-        cout << "Press any key to start the game...";
-        _getch(); 
-
-        while (!gameOver) {
-            draw();
-            input();
-            logic();
-            Sleep(100);
-        }
-
-        if (score > maxScore) {
-            maxScore = score;
-        }
-
-        cout << "Game Over! Final Score: " << score << endl;
+    bool isGameOver() {
+        return gameOver;
     }
-
-    static int getMaxScore() {
-        return maxScore;
+    void delay(int ms) {
+        Sleep(ms);
+    }
+    int getScore() {
+        return score;
     }
 };
-int Game::maxScore = 0;
-
 int main() {
-    char choice;
-    do {
-        srand(time(0)); 
-        Game game;
-        game.run();
-        cout << "Play again? (y/n): ";
-        cin >> choice;
-    } while (choice == 'y' || choice == 'Y');
+    srand(time(0));
+    string userName;
+    system("cls");
+    setColor(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+    cout << "Welcome to the Snake Game!\n";
+    cout << "Please enter your name: ";
+    getline(cin, userName);
+    if (userName.empty()) {
+        userName = "Player";
+    }
+    
+    bool exitGame = false;
+    while (!exitGame) {
+        system("cls");
+        setColor(FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+        cout << "==============================================\n";
+        cout << "         WELCOME " << userName << " TO SNAKE GAME!\n";
+        cout << "==============================================\n";
+        setColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+        cout << "Select Difficulty Level:\n";
+        cout << "  a) Easy    (200ms delay)\n";
+        cout << "  b) Medium  (120ms delay)\n";
+        cout << "  c) Hard    (80ms delay)\n";
+        cout << "  x) Exit\n";
+        cout << "==============================================\n";
+        cout << "Enter your choice: ";
+        char diffInput;
+        cin >> diffInput;
+        
+        Difficulty currentDiff;
+        int delayTime = 200;
+        if (diffInput == 'a' || diffInput == 'A') {
+            currentDiff = EASY;
+            delayTime = 200;
+        } else if (diffInput == 'b' || diffInput == 'B') {
+            currentDiff = MEDIUM;
+            delayTime = 120;
+        } else if (diffInput == 'c' || diffInput == 'C') {
+            currentDiff = HARD;
+            delayTime = 80;
+        } else if (diffInput == 'x' || diffInput == 'X') {
+            break;
+        } else {
+            cout << "Invalid choice. Please try again.\n";
+            Sleep(1000);
+            continue;
+        }
+        
+        bool backToMenu = false;
+        while (!backToMenu && !exitGame) {
+            SnakeGame game(currentDiff);
+            system("cls");
+            setColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+            cout << "\nHello " << userName << ", get ready to play!\n";
+            cout << "Press any key to start the game...";
+            _getch();
+            while (!game.isGameOver()) {
+                game.draw();
+                game.input();
+                game.logic();
+                game.delay(delayTime);
+            }
+            game.draw();
+            setColor(FOREGROUND_RED | FOREGROUND_INTENSITY);
+            cout << "==============================================\n";
+            cout << "              GAME OVER, " << userName << "!\n";
+            cout << "         Final Score: " << game.getScore() << "\n";
+            cout << "==============================================\n";
+            setColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+            cout << "Press 'p' to play again, 'm' for Main Menu, or 'x' to Exit: ";
+            char postChoice;
+            cin >> postChoice;
+            if (postChoice == 'p' || postChoice == 'P') {
+                continue;  
+            } else if (postChoice == 'm' || postChoice == 'M') {
+                backToMenu = true;
+            } else if (postChoice == 'x' || postChoice == 'X') {
+                exitGame = true;
+                break;
+            }
+        }
+    }
+    
+    setColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     return 0;
 }
