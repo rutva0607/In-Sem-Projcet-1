@@ -1,6 +1,6 @@
 # Snake Game🐍🐍🐍
 
-## Created BY
+## Created By
 - **Rutva Mehta**
 - **Khush Hingrajiya**
 - **Manthan Kanetiya**
